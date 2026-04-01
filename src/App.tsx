@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const apiKey = "AIzaSyDsLiSZ9s8CfdJXbsdhPu9Hk4a-EXsjLzk"; // <--- เอา API Key ของคุณครูมาวางในเครื่องหมายคำพูดตรงนี้นะครับ
+// 👇 เอา API Key ที่ก๊อปปี้มา วางในเครื่องหมายคำพูดบรรทัดนี้เลยครับ! (ห้ามเว้นวรรคนะ)
+const apiKey = " AIzaSyDdtVAzq3urrUtSwin9h_HqyHkhEfB0BaA"; 
 
-// --- API Helpers ---
+// --- API Helpers (Updated to Gemini 1.5 Flash) ---
 const fetchGeminiResponse = async (prompt, systemInstruction) => {
   let retries = 5; let delay = 1000;
   while (retries > 0) {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+      if (!apiKey || apiKey === "ใส่_API_KEY_ตรงนี้ครับ" || apiKey === "") {
+         return "⚠️ คุณครูยังไม่ได้ใส่ API Key ในโค้ดบรรทัดที่ 3 ครับ! (AI เลยไม่มีสิทธิ์ตอบ)";
+      }
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           contents: [{ parts: [{ text: prompt }] }], 
@@ -19,49 +23,10 @@ const fetchGeminiResponse = async (prompt, systemInstruction) => {
       return data.candidates[0].content.parts[0].text;
     } catch (err) {
       retries--;
-      if (retries === 0) return "ขออภัยครับ ระบบ AI ขัดข้องชั่วคราว ลองใหม่อีกครั้งนะครับ";
+      if (retries === 0) return "ขออภัยครับ ระบบ AI ขัดข้องชั่วคราว (หรืออาจจะเชื่อมต่อไม่ได้) ลองใหม่อีกครั้งนะครับ";
       await new Promise(res => setTimeout(res, delay)); delay *= 2;
     }
   }
-};
-
-const playAudioFromBase64PCM = (base64PCM) => {
-  return new Promise((resolve) => {
-      const binaryString = atob(base64PCM);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-      const sampleRate = 24000; const numChannels = 1; const bitsPerSample = 16;
-      const blockAlign = numChannels * (bitsPerSample / 8); const byteRate = sampleRate * blockAlign;
-      const wavBuffer = new ArrayBuffer(44 + bytes.length); const view = new DataView(wavBuffer);
-      const writeString = (view, offset, string) => { for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i)); };
-
-      writeString(view, 0, 'RIFF'); view.setUint32(4, 36 + bytes.length, true);
-      writeString(view, 8, 'WAVE'); writeString(view, 12, 'fmt ');
-      view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numChannels, true);
-      view.setUint32(24, sampleRate, true); view.setUint32(28, byteRate, true);
-      view.setUint16(32, blockAlign, true); view.setUint16(34, bitsPerSample, true);
-      writeString(view, 36, 'data'); view.setUint32(40, bytes.length, true);
-      for (let i = 0; i < bytes.length; i++) view.setUint8(44 + i, bytes[i]);
-
-      const blob = new Blob([view], { type: 'audio/wav' });
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.onended = () => resolve(); audio.onerror = () => resolve();
-      audio.play();
-  });
-};
-
-const fetchGeminiTTS = async (text, voice = "Kore") => {
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: text }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } })
-    });
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    const inlineData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-    if (inlineData) await playAudioFromBase64PCM(inlineData.data);
-  } catch (err) { console.error("TTS Error:", err); }
 };
 
 const SYSTEM_PROMPT = `คุณคือ AI Socratic Social & Environment Tutor 
@@ -72,9 +37,21 @@ const SYSTEM_PROMPT = `คุณคือ AI Socratic Social & Environment Tutor
 3. ชื่นชมก่อน แล้วตั้งคำถามต้อน (Socratic) 1-2 คำถาม เพื่อให้เด็กคิดเรื่องอำนาจ ความเหลื่อมล้ำ และทุนนิยม
 4. เป็นมิตร สั้น กระชับ เน้นคำสำคัญ (Bold)`;
 
+// --- อัปเดตระบบเสียงให้เสถียรขึ้น ---
 const TTSButton = ({ text, className = "" }) => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const handlePlay = async () => { setIsPlaying(true); await fetchGeminiTTS(text, "Zephyr"); setIsPlaying(false); };
+    const handlePlay = () => {
+        if ('speechSynthesis' in window) {
+            setIsPlaying(true);
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH'; // เสียงภาษาไทย
+            utterance.onend = () => setIsPlaying(false);
+            utterance.onerror = () => setIsPlaying(false);
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("เบราว์เซอร์ของคุณไม่รองรับระบบเสียงครับ");
+        }
+    };
     return (
         <button onClick={handlePlay} disabled={isPlaying} className={`flex items-center text-xs font-bold transition-all ${isPlaying ? 'text-indigo-400' : 'text-indigo-600 hover:text-indigo-800'} ${className}`}>
             <span className="text-base mr-1">{isPlaying ? "⏳" : "🔊"}</span>
