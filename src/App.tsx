@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const apiKey = "AIzaSyDdtVAzq3urrUtSwin9h_HqyHkhEfB0BaA"; 
+const apiKey = "AIzaSyBTtlX6n7JeVLm88BGM6_hAyf_GfJJsF48"; 
 
 // --- API Helpers (Updated to Gemini 1.5 Flash) ---
 const fetchGeminiResponse = async (prompt, systemInstruction) => {
   let retries = 5; let delay = 1000;
   while (retries > 0) {
     try {
-      if (!apiKey || apiKey === "AIzaSyDdtVAzq3urrUtSwin9h_HqyHkhEfB0BaA" || apiKey === "") {
+      if (!apiKey || apiKey === "AIzaSyBTtlX6n7JeVLm88BGM6_hAyf_GfJJsF48" || apiKey === "") {
          return "⚠️ คุณครูยังไม่ได้ใส่ API Key ในโค้ดบรรทัดที่ 3 ครับ! (AI เลยไม่มีสิทธิ์ตอบ)";
       }
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
