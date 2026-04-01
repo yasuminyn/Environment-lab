@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// 👇 เอา API Key ที่ก๊อปปี้มา วางในเครื่องหมายคำพูดบรรทัดนี้เลยครับ! (ห้ามเว้นวรรคนะ)
 const apiKey = "AIzaSyDdtVAzq3urrUtSwin9h_HqyHkhEfB0BaA"; 
 
 // --- API Helpers (Updated to Gemini 1.5 Flash) ---
