@@ -8,7 +8,7 @@ const fetchGeminiResponse = async (prompt, systemInstruction) => {
   let retries = 5; let delay = 1000;
   while (retries > 0) {
     try {
-      if (!apiKey || apiKey === "ใส่_API_KEY_ตรงนี้ครับ" || apiKey === "") {
+      if (!apiKey || apiKey === "AIzaSyDdtVAzq3urrUtSwin9h_HqyHkhEfB0BaA" || apiKey === "") {
          return "⚠️ คุณครูยังไม่ได้ใส่ API Key ในโค้ดบรรทัดที่ 3 ครับ! (AI เลยไม่มีสิทธิ์ตอบ)";
       }
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
